@@ -1,0 +1,180 @@
+ToDo's List Demo App
+
+This app will be setup on Rails 3.1.1 and use sqlite3 for the db. My system is running Ruby 1.9.2.
+
+1. If using RVM create a new gemset $ rvm use 1.9.2@todo --create
+
+2. Install rails in gemset. $ gem install rails --no-ri --no-rdoc
+
+3. $ rails new todo
+
+4. Create .rvmrc file in project directory
+    rvm use 1.9.2@todo
+
+5. cd into project directory $ cd todo
+
+6. Start the rails server $ rails s
+    If you see the rails welcome page your app works! It does nothing but it works!
+
+7. open your text editor $ mate .
+
+8. Lets look at the guts of a rails app
+    -App
+      -Assets
+        +images
+        +javascripts
+        +stylesheets
+      -Controllers
+      -Helpers
+      -Mailers
+      -Models
+      -Views
+    
+    -Config
+      +routes.rb
+      
+    -DB
+      +this is where your migrations will be generated
+    
+    -Gemfile
+      + This is where you add gems to the project
+    
+    -Gemfile.lock
+      + When you run bundle this is where all the gems and version numbers get added in to
+    
+    -Public
+      -no longer holds the assets
+      -index.html (the rails welcome page)
+    
+    -test (the default test unit files)
+
+9. Time to load up the Gemfile
+
+gem 'kaminari'
+
+group :development do
+  gem 'nifty-generators'
+  gem 'rspec-rails'
+end
+
+group :test do
+  gem 'rspec'
+  gem 'mocha'
+end
+
+
+10. Bundle the gems $ bundle
+
+11. install rspec $ rails g rspec:install
+      In spec_helper.rb change Mock Framework to mocha
+
+12. Start git $ git init
+    If you like git flow also run $ git flow init
+
+13. Use nifty-generators to create basic layout
+    $ rails g nifty:layout --haml
+    Remove application.html.erb from layouts
+    In application.html.haml change javascript_include_tag to :application
+    Create a partial in app/assets/stylesheets/_application.css.sass and copy/paste the contents of  public/stylesheets/sass/application.sass into it.
+    
+14. Time to create our todo's
+    $ rails g nifty:scaffold task item:string description:string --haml
+    $ rake db:migrate
+    $ rails s
+    go to localhost:3000/tasks
+    
+15. Make task#index the root view in routes.rb
+    uncomment root :to
+    Change 'welcome#index' to 'tasks#index'
+    Remove public/index.html
+    restart the server if necessary $ rails s
+    go to localhost:/3000 and you should see the items index page
+    
+16. Add add priority to tasks
+    $ rails g migration add_priority_to_tasks priority:integer
+    Look at migration and see rails magic
+    $ rake db:migrate
+    Edit tasks views
+      _form
+        Add priority 
+          %p
+            = f.label :priority, "Priority (it's a number)"
+            %br
+            = f.text_field :priority
+        Change description from f.text_field to f.text_area :description, :cols => "50", :rows => "5"
+      show add priority
+      index change description to priority
+        make task.item a link to show = link_to task.item, task
+          remove show link
+      
+      models/task.rb -- add :priority to attr_accessible
+    
+
+17. Lets add some tests of our own
+    First prepare the test db
+
+$ rake db:test:prepare
+    
+spec/models/task_spec.rb
+require File.dirname(__FILE__) + '/../spec_helper'
+
+describe Task do
+  before(:each) do
+    @attr = {
+      :item => "test task",
+      :description => "test description",
+      :priority => 10
+    }
+  end
+
+  it "should create a new task given valid attributes" do
+    Task.create!(@attr)
+  end
+
+  describe "task validations" do
+    it "should require an item" do
+      Task.new(@attr.merge(:item =>""))
+      should_not be_valid
+    end
+
+    it "should require a priority" do
+      Task.new(@attr.merge(:priority =>""))
+      should_not be_valid
+    end
+  end
+end
+      
+      The task validations test we just added should fail. we will make them pass in the next step
+      $ rspec spec/
+
+
+18. Validate that the item & priority are not blank
+    models/task.rb
+      validates_presence_of :item, :priority
+      
+    rspec should pass
+
+19. See the db db/seeds.rb
+    1.upto(25) do |x|
+      Task.create(item: "Task #{x}", description: "Description #{x}", priority: x)
+    end
+    
+19. Making the default sort priority
+    models/task.rb
+      default_scope :order => 'tasks.priority DESC'
+
+20. Adding pagination with kaminari
+    At this moment will_paginate gem doesn't work on rails 3.1
+    
+    tasks_controller.rb
+      def index
+        @tasks = Task.order.page(params[:page])
+      end
+      
+    tasks/index.html.haml above the table add
+      = paginate @tasks
+    
+    Changing the number of items being shown
+      def index
+        @tasks = Task.order.page(params[:page]).per(10)
+      end
