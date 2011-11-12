@@ -115,7 +115,7 @@ end
       
     
 
-17. Lets add some tests of our own
+17. Scaffold generates a bunch of tests on it's own. You probably want to get rid of them. Lets add some tests of our own
     First prepare the test db
 
 $ rake db:test:prepare
@@ -159,10 +159,12 @@ end
       
     rspec should pass
 
-19. See the db db/seeds.rb
-    1.upto(25) do |x|
-      Task.create(item: "Task #{x}", description: "Description #{x}", priority: x)
-    end
+19. Seeding the db 
+
+db/seeds.rb
+1.upto(25) do |x|
+  Task.create(item: "Task #{x}", description: "Description #{x}", priority: x)
+end
     
 19. Making the default sort priority
     models/task.rb
