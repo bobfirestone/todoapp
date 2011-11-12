@@ -71,43 +71,48 @@ end
 12. Start git $ git init
     If you like git flow also run $ git flow init
 
-13. Use nifty-generators to create basic layout
-    $ rails g nifty:layout --haml
-    Remove application.html.erb from layouts
-    In application.html.haml change javascript_include_tag to :application
-    Create a partial in app/assets/stylesheets/_application.css.sass and copy/paste the contents of  public/stylesheets/sass/application.sass into it.
-    
-14. Time to create our todo's
-    $ rails g nifty:scaffold task item:string description:string --haml
+13. Time to create our todo's
+    $ rails g scaffold task item:string description:text
     $ rake db:migrate
     $ rails s
     go to localhost:3000/tasks
-    
-15. Make task#index the root view in routes.rb
+
+14. Make task#index the root view in routes.rb
     uncomment root :to
     Change 'welcome#index' to 'tasks#index'
     Remove public/index.html
     restart the server if necessary $ rails s
     go to localhost:/3000 and you should see the items index page
+
+15. Use nifty-generators to create basic layout
+    $ rails g nifty:layout
+    In application.html.erb change javascript_include_tag to :application
+    Rename /public/stylesheets/application.css to nifty.css
+    Move nifty.css to app/assest/stylesheets
+    Remove some extra stuff in the views/layouts/application.html.erb
+      Give the <title> a title
+      remove title helper from <body>
+    Reload the page & you should have a nice looking page on a blue background
+    
     
 16. Add add priority to tasks
     $ rails g migration add_priority_to_tasks priority:integer
     Look at migration and see rails magic
     $ rake db:migrate
-    Edit tasks views
-      _form
-        Add priority 
-          %p
-            = f.label :priority, "Priority (it's a number)"
-            %br
-            = f.text_field :priority
-        Change description from f.text_field to f.text_area :description, :cols => "50", :rows => "5"
-      show add priority
-      index change description to priority
+    Add priority fields to views/tasks/_form.html.erb
+
+  <div class="field">
+    <%= f.label :priority %><br />
+    <%= f.text_field :priority %>
+  </div>
+
+
+    Add priority to views/tasks/show.html.erb
+    
+    In views/tasks.index.html.erb change description to priority
         make task.item a link to show = link_to task.item, task
           remove show link
       
-      models/task.rb -- add :priority to attr_accessible
     
 
 17. Lets add some tests of our own
@@ -116,7 +121,7 @@ end
 $ rake db:test:prepare
     
 spec/models/task_spec.rb
-require File.dirname(__FILE__) + '/../spec_helper'
+require 'spec_helper'
 
 describe Task do
   before(:each) do
@@ -145,7 +150,7 @@ describe Task do
 end
       
       The task validations test we just added should fail. we will make them pass in the next step
-      $ rspec spec/
+      $ rspec spec/models
 
 
 18. Validate that the item & priority are not blank
@@ -164,7 +169,6 @@ end
       default_scope :order => 'tasks.priority DESC'
 
 20. Adding pagination with kaminari
-    At this moment will_paginate gem doesn't work on rails 3.1
     
     tasks_controller.rb
       def index
